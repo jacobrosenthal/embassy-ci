@@ -9,22 +9,43 @@ platform:
 steps:
   - name: build
     image: rust:latest
+    volumes:
+      - name: rust-cache
+        path: /cache
     commands:
       - cargo build --release --verbose --manifest-path something/Cargo.toml
+    environment:
+      RUSTUP_HOME: /cache/rustup
+      CARGO_HOME: /cache/cargo
+      CARGO_TARGET_DIR: /cache/target
 
   - name: test
     image: rust:latest
+    volumes:
+      - name: rust-cache
+        path: /cache
     commands:
       - cargo test --verbose --manifest-path something/Cargo.toml
+    environment:
+      RUSTUP_HOME: /cache/rustup
+      CARGO_HOME: /cache/cargo
+      CARGO_TARGET_DIR: /cache/target
 
   - name: build-test-hil
     pull: if-not-exists
     image: jacobrosenthal/drone-runner-rust-teleprobe
+    volumes:
+      - name: rust-cache
+        path: /cache
     commands:
       - cargo batch --- build --release --manifest-path tests/nrf52840/Cargo.toml --target thumbv7em-none-eabi --out-dir out/tests/nrf52840-dk
-      - teleprobe client --token ${TELEPROBE_TOKEN} --host '${TELEPROBE_HOST}' run -r out/tests
+      - teleprobe client --token $TELEPROBE_TOKEN --host $TELEPROBE_HOST run -r out/tests
     environment:
-      TELEPROBE_HOST:
-        from_secret: TELEPROBE_HOST
-      TELEPROBE_TOKEN:
-        from_secret: TELEPROBE_TOKEN
+      RUSTUP_HOME: /cache/rustup
+      CARGO_HOME: /cache/cargo
+      CARGO_TARGET_DIR: /cache/target
+
+volumes:
+  - name: rust-cache
+    host:
+      path: /cache
