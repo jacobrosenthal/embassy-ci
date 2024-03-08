@@ -6,7 +6,7 @@ steps:
   - name: build
     image: rust:latest
     commands:
-      - cargo build -release --verbose --manifest-path something/Cargo.toml
+      - cargo build --release --verbose --manifest-path something/Cargo.toml
 
   # - name: test
   #   image: rust:latest
