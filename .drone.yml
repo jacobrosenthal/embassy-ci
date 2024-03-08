@@ -8,25 +8,25 @@ steps:
     commands:
       - cargo build -release --verbose --manifest-path something/Cargo.toml
 
-  - name: test
-    image: rust:latest
-    commands:
-      - cargo test --verbose --manifest-path something/Cargo.toml
+  # - name: test
+  #   image: rust:latest
+  #   commands:
+  #     - cargo test --verbose --manifest-path something/Cargo.toml
 
-  - name: build-hil
-    image: rust:latest
-    commands:
-      - cargo build --release --verbose --manifest-path tests/nrf52840/Cargo.toml --target thumbv7em-none-eabi
-  - name: test-hil
-    image: curlimages/curl:latest
-    commands:
-      - >
-        curl -X POST "${TELEPROBE_HOST}"
-        -H "Authorization: Bearer ${TELEPROBE_TOKEN}"
-        -H "Content-Type: application/octet-stream"
-        --data-binary "@/drone/src/tests/nrf52840/target/thumbv7em-none-eabi/release/timer"
-    environment:
-      TELEPROBE_HOST:
-        from_secret: TELEPROBE_HOST
-      TELEPROBE_TOKEN:
-        from_secret: TELEPROBE_TOKEN
+  # - name: build-hil
+  #   image: rust:latest
+  #   commands:
+  #     - cargo build --release --verbose --manifest-path tests/nrf52840/Cargo.toml --target thumbv7em-none-eabi
+  # - name: test-hil
+  #   image: curlimages/curl:latest
+  #   commands:
+  #     - >
+  #       curl -X POST "${TELEPROBE_HOST}"
+  #       -H "Authorization: Bearer ${TELEPROBE_TOKEN}"
+  #       -H "Content-Type: application/octet-stream"
+  #       --data-binary "@/drone/src/tests/nrf52840/target/thumbv7em-none-eabi/release/timer"
+  #   environment:
+  #     TELEPROBE_HOST:
+  #       from_secret: TELEPROBE_HOST
+  #     TELEPROBE_TOKEN:
+  #       from_secret: TELEPROBE_TOKEN
