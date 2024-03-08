@@ -37,7 +37,7 @@ steps:
         path: /cache
     commands:
       - cargo batch --- build --release --manifest-path tests/nrf52840/Cargo.toml --target thumbv7em-none-eabi --out-dir out/tests/nrf52840-dk
-      - teleprobe client --token $TELEPROBE_TOKEN --host $TELEPROBE_HOST run -r out/tests
+      - teleprobe local run --elf out/tests/nrf52840-dk/timer --chip nrf52840
     environment:
       RUSTUP_HOME: /cache/rustup
       CARGO_HOME: /cache/cargo
