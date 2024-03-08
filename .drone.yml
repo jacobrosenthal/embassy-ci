@@ -17,7 +17,6 @@ steps:
     environment:
       RUSTUP_HOME: /cache/rustup
       CARGO_HOME: /cache/cargo
-      CARGO_TARGET_DIR: /cache/target
 
   - name: test
     image: rust:latest
@@ -29,7 +28,6 @@ steps:
     environment:
       RUSTUP_HOME: /cache/rustup
       CARGO_HOME: /cache/cargo
-      CARGO_TARGET_DIR: /cache/target
 
   - name: build-test-hil
     pull: if-not-exists
@@ -43,7 +41,10 @@ steps:
     environment:
       RUSTUP_HOME: /cache/rustup
       CARGO_HOME: /cache/cargo
-      CARGO_TARGET_DIR: /cache/target
+      TELEPROBE_TOKEN:
+        from_secret: TELEPROBE_TOKEN
+      TELEPROBE_HOST:
+        from_secret: TELEPROBE_HOST
 
 volumes:
   - name: rust-cache
