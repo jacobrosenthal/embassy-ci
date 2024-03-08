@@ -12,10 +12,20 @@ steps:
     commands:
       - cargo build --release --verbose --manifest-path something/Cargo.toml
 
-  # - name: test
-  #   image: rust:latest
-  #   commands:
-  #     - cargo test --verbose --manifest-path something/Cargo.toml
+  - name: test
+    image: rust:latest
+    commands:
+      - cargo test --verbose --manifest-path something/Cargo.toml
+
+  - name: build-test-hil
+    image: jacobrosenthal/drone-runner-rust-teleprobe
+    commands:
+      - cargo batch --- build --release --manifest-path tests/nrf52840/Cargo.toml --target thumbv7em-none-eabi --out-dir out/tests/nrf52840-dk
+
+  - name: test-hil
+    image: jacobrosenthal/drone-runner-rust-teleprobe
+    commands:
+      - teleprobe client run -r out/tests
 
   # - name: build-hil
   #   image: rust:latest
