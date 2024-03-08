@@ -22,22 +22,9 @@ steps:
     image: jacobrosenthal/drone-runner-rust-teleprobe
     commands:
       - cargo batch --- build --release --manifest-path tests/nrf52840/Cargo.toml --target thumbv7em-none-eabi --out-dir out/tests/nrf52840-dk
-      - teleprobe client run -r out/tests
-
-  # - name: build-hil
-  #   image: rust:latest
-  #   commands:
-  #     - cargo build --release --verbose --manifest-path tests/nrf52840/Cargo.toml --target thumbv7em-none-eabi
-  # - name: test-hil
-  #   image: curlimages/curl:latest
-  #   commands:
-  #     - >
-  #       curl -X POST "${TELEPROBE_HOST}"
-  #       -H "Authorization: Bearer ${TELEPROBE_TOKEN}"
-  #       -H "Content-Type: application/octet-stream"
-  #       --data-binary "@/drone/src/tests/nrf52840/target/thumbv7em-none-eabi/release/timer"
-  #   environment:
-  #     TELEPROBE_HOST:
-  #       from_secret: TELEPROBE_HOST
-  #     TELEPROBE_TOKEN:
-  #       from_secret: TELEPROBE_TOKEN
+      - teleprobe client --token ${TELEPROBE_TOKEN} --host '${TELEPROBE_HOST}' run -r out/tests
+    environment:
+      TELEPROBE_HOST:
+        from_secret: TELEPROBE_HOST
+      TELEPROBE_TOKEN:
+        from_secret: TELEPROBE_TOKEN
