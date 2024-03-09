@@ -17,22 +17,30 @@ jobs:
           command: build
           args: --release --manifest-path tests/nrf52840/Cargo.toml --target thumbv7em-none-eabi --bin timer
 
-      - name: Send Binary with curl and Check Response
+      - name: test timer
         env:
           TELEPROBE_HOST: ${{ secrets.TELEPROBE_HOST }}
           TELEPROBE_TOKEN: ${{ secrets.TELEPROBE_TOKEN }}
         run: |
-          # Send the binary file using curl and capture the output
-          OUTPUT=$(curl -X POST "${TELEPROBE_HOST}/targets/nrf52840-dk/run?timeout=60" \
-                  -H "Authorization: Bearer ${TELEPROBE_TOKEN}" \
-                  -H "Content-Type: application/octet-stream" \
-                  --data-binary "@tests/nrf52840/target/thumbv7em-none-eabi/release/timer" 2>&1)
-                  
-          # Print the output for debugging purposes
-          echo "$OUTPUT"
+          response=$(curl -s -X POST "${TELEPROBE_HOST}/targets/nrf52840-dk/run?timeout=60" \
+                          -H "Authorization: Bearer ${TELEPROBE_TOKEN}" \
+                          -H "Content-Type: application/octet-stream" \
+                          --data-binary "@tests/nrf52840/target/thumbv7em-none-eabi/release/timer" \
+                          -w "\n%{http_code}")
+          echo "$response"
+          http_status=$(echo "$response" | tail -n1)
+          [ "$http_status" -ge 200 ] && [ "$http_status" -lt 300 ] && echo "Test succeeded" || { echo "Test failed"; exit 1; }
 
-          # Check if the last line of the output is "Test OK"
-          if [[ "$(echo "$OUTPUT" | tail -n 1)" != "Test OK" ]]; then
-            echo "Test did not end with 'Test OK'. Failing the job."
-            exit 1
-          fi
+      - name: test timer2
+        env:
+          TELEPROBE_HOST: ${{ secrets.TELEPROBE_HOST }}
+          TELEPROBE_TOKEN: ${{ secrets.TELEPROBE_TOKEN }}
+        run: |
+          response=$(curl -s -X POST "${TELEPROBE_HOST}/targets/nrf52840-dk/run?timeout=60" \
+                          -H "Authorization: Bearer ${TELEPROBE_TOKEN}" \
+                          -H "Content-Type: application/octet-stream" \
+                          --data-binary "@tests/nrf52840/target/thumbv7em-none-eabi/release/timer2" \
+                          -w "\n%{http_code}")
+          echo "$response"
+          http_status=$(echo "$response" | tail -n1)
+          [ "$http_status" -ge 200 ] && [ "$http_status" -lt 300 ] && echo "Test succeeded" || { echo "Test failed"; exit 1; }
