@@ -15,7 +15,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release --manifest-path tests/nrf52840/Cargo.toml --target thumbv7em-none-eabi --bin timer
+          args: --release --manifest-path tests/nrf52840/Cargo.toml --target thumbv7em-none-eabi
 
       - name: test timer
         env:
