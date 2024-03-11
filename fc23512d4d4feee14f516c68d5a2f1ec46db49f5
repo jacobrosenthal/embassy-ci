@@ -1,0 +1,5 @@
+| text | data | bss | dec | hex | filename |
+| --- | --- | --- | --- | --- | --- |
+| 12676 | 112 | 34256 | 47044 | b7c4 | blinky |
+- Flash usage: 12788 bytes
+- RAM usage: 34368 bytes
