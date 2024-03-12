@@ -43,7 +43,7 @@ jobs:
         id: cargo_size
         run: |
           echo "size<<EOF" >> $GITHUB_OUTPUT
-          cargo size --target thumbv7em-none-eabi --release >> $GITHUB_OUTPUT
+          cargo size -q --target thumbv7em-none-eabi --release >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         working-directory: something-nrf52840
         continue-on-error: true
