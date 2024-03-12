@@ -1,0 +1,159 @@
+name: CI
+
+on: [pull_request]
+
+permissions:
+  pull-requests: write
+  contents: write # Git notes
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          target: thumbv7em-none-eabi
+          toolchain: 1.75
+          components: rust-src, rustfmt, llvm-tools
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-something-nrf52840-${{ hashFiles('something-nrf52840/Cargo.lock') }}
+
+      - name: install curl
+        run: sudo apt-get install curl
+
+      - name: build
+        run: cargo build --manifest-path something-nrf52840/Cargo.toml --target thumbv7em-none-eabi
+
+      - name: install cargo-binutils
+        run: curl -L https://github.com/rust-embedded/cargo-binutils/releases/download/v0.3.6/x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /usr/local/bin --strip-components=1 x86_64-unknown-linux-gnu/
+
+      - name: cargo size and set output
+        id: cargo_size
+        run: |
+          echo "size<<EOF" >> $GITHUB_OUTPUT
+          cargo size --target thumbv7em-none-eabi --release >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        working-directory: something-nrf52840
+        continue-on-error: true
+
+      - name: Get parent commit SHA and set output if successful
+        id: get_parent_size
+        run: |
+          echo "size<<EOF" >> $GITHUB_OUTPUT
+          $(git notes show ${{ github.event.pull_request.base.sha }}) >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Create size markdown table
+        id: create_table
+        uses: actions/github-script@v5
+        env:
+          CURRENT_SIZE: ${{ steps.cargo_size.outputs.size }}
+          PARENT_SIZE: ${{ steps.get_parent_size.outputs.size }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            function parseSize(content) {
+                console.log("content", typeof content, content);
+                const lines = content.split('\n');
+                const headers = lines[0].split(/\s+/).filter(Boolean);
+                const values = lines[1].split(/\s+/).filter(Boolean);
+
+                return { headers, values };
+            }
+            console.log("CURRENT_SIZE", typeof process.env.CURRENT_SIZE, process.env.CURRENT_SIZE);
+            const newContent = parseSize(process.env.CURRENT_SIZE);
+            let markdownTable = `\n| ${newContent.headers.join(' | ')} |\n| --- | --- | --- | --- | --- | --- |\n| ${newContent.values.join(' | ')} |\n`;
+
+            try {
+                const oldContentFields = parseSize(process.env.PARENT_SIZE);
+                let differences = oldContentFields.values.map((oldValue, index) => {
+
+                    if (index >= 3) {
+                        return " ";
+                    } else {
+
+                        const parsedOld = parseInt(oldValue, 10);
+                        const parsedNew = parseInt(newContent.values[index], 10);
+                        if (isNaN(parsedOld) || isNaN(parsedNew)) {
+                            throw new Error("Invalid integer" + `: "${oldValue} ${newContent.values[index]}"`);
+                        }
+                        const diff = parsedNew - parsedOld
+                        return diff >= 0 ? `+${diff}` : `${diff}`;
+                    }
+                });
+
+                markdownTable += `| ${oldContentFields.values.join(' | ')} |\n`;
+                markdownTable += `| ${differences.join(' | ')} |\n`;
+
+            } catch (e) { console.log(e) }
+
+            core.setOutput('markdownTable', markdownTable);
+        continue-on-error: true
+
+      - name: Post a comment
+        uses: actions/github-script@v5
+        env:
+          MARKDOWN_TABLE: ${{ steps.create_table.outputs.markdownTable }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: context.issue.number,
+              body: process.env.MARKDOWN_TABLE
+            });
+        continue-on-error: true
+
+  hil:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          target: thumbv7em-none-eabi
+          toolchain: 1.75
+          components: rust-src, rustfmt, llvm-tools
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-tests-nrf52840-${{ hashFiles('tests/nrf52840/Cargo.lock') }}
+
+      - name: install curl
+        run: sudo apt-get install curl
+
+      - name: install cargo-batch
+        run: curl -L -o /usr/local/bin/cargo-batch https://github.com/embassy-rs/cargo-batch/releases/download/batch-0.3.0/cargo-batch && chmod +x /usr/local/bin/cargo-batch
+
+      - name: build HIL
+        run: cargo batch --- build --release --manifest-path tests/nrf52840/Cargo.toml --target thumbv7em-none-eabi --out-dir out/tests
+
+      - name: install teleprobe
+        run: curl -L -o /usr/local/bin/teleprobe https://github.com/jacobrosenthal/teleprobe/releases/download/v0.1.0-static/teleprobe-v0.1.0-static-linux-x64 && chmod +x /usr/local/bin/teleprobe
+
+      - name: test HIL
+        if: github.event_name == 'workflow_dispatch' || github.actor == 'jacobrosenthal'
+        run: teleprobe client --token ${{ secrets.TELEPROBE_TOKEN }} --host ${{ secrets.TELEPROBE_HOST }} run -r out/tests
