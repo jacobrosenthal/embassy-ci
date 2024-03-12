@@ -1,0 +1,58 @@
+name: SIZE
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write # Git notes
+
+jobs:
+  post-merge-job:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          target: thumbv7em-none-eabi
+          toolchain: 1.75
+          components: rust-src, rustfmt, llvm-tools
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-something-nrf52840-${{ hashFiles('something-nrf52840/Cargo.lock') }}
+
+      - name: build
+        run: cargo build --manifest-path something-nrf52840/Cargo.toml --target thumbv7em-none-eabi
+
+      - name: install curl
+        run: sudo apt-get install curl
+
+      - name: install cargo-binutils
+        run: curl -L https://github.com/rust-embedded/cargo-binutils/releases/download/v0.3.6/x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /usr/local/bin --strip-components=1 x86_64-unknown-linux-gnu/
+
+      - name: cargo size and set output
+        id: cargo_size
+        run: |
+          echo "size<<EOF" >> $GITHUB_OUTPUT
+          cargo size --target thumbv7em-none-eabi --release >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        working-directory: something-nrf52840
+        continue-on-error: true
+
+      - name: Add analysis results to Git notes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git fetch origin refs/notes/*:refs/notes/*
+          git notes add -m "${{ steps.cargo_size.outputs.size }}" ${{ github.event.pull_request.merge_commit_sha }}
+          git push origin refs/notes/*
+        continue-on-error: true
