@@ -54,7 +54,7 @@ jobs:
         run: |
           git fetch origin refs/notes/*:refs/notes/*
           echo "size<<EOF" >> $GITHUB_OUTPUT
-          git notes show --ref cargo-size-berkley ${{ github.event.pull_request.base.sha }} >> $GITHUB_OUTPUT || echo '' >> $GITHUB_OUTPUT
+          git notes --ref cargo-size-berkley show ${{ github.event.pull_request.base.sha }} >> $GITHUB_OUTPUT || echo '' >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         continue-on-error: true
 

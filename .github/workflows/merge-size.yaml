@@ -53,6 +53,6 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git fetch origin refs/notes/*:refs/notes/*
-          git notes add --ref cargo-size-berkley -m "${{ steps.cargo_size.outputs.size }}" ${{ github.event.pull_request.merge_commit_sha }}
+          git notes --ref cargo-size-berkley add -m "${{ steps.cargo_size.outputs.size }}" ${{ github.event.pull_request.merge_commit_sha }}
           git push origin refs/notes/*
         continue-on-error: true
