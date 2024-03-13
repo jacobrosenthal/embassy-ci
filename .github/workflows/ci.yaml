@@ -29,7 +29,7 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            target/
+            something-nrf52840/target/
           key: ${{ runner.os }}-${{ steps.rusttoolchain.outputs.cachekey }}-cargo-something-nrf52840-${{ hashFiles('something-nrf52840/Cargo.lock') }}
 
       - name: install curl
