@@ -28,7 +28,7 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            target/
+            something-nrf52840/target/
           key: ${{ runner.os }}-cargo-something-nrf52840-${{ hashFiles('something-nrf52840/Cargo.lock') }}
 
       - name: install curl
@@ -140,7 +140,7 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            target/
+            tests/nrf52840/target/
           key: ${{ runner.os }}-cargo-tests-nrf52840-${{ hashFiles('tests/nrf52840/Cargo.lock') }}
 
       - name: install curl
