@@ -74,35 +74,38 @@ jobs:
                 return { headers, values };
             }
 
-            let markdownTable;
-            let newContent;
+            let currentSize;
             try {
-              newContent = parseSizeBerkley(process.env.CURRENT_SIZE);
-              markdownTable = `\n| ${newContent.headers.join(' | ')} |\n| --- | --- | --- | --- | --- | --- |\n| ${newContent.values.join(' | ')} |\n`;
+                currentSize = parseSizeBerkley(process.env.CURRENT_SIZE);
+            } catch (e) { core.setFailed(`Parse current size failed: ${error.message}`, typeof process.env.CURRENT_SIZE, process.env.CURRENT_SIZE); }
 
-            } catch (e) { console.log("Parent current size failed", e, typeof process.env.CURRENT_SIZE, process.env.CURRENT_SIZE) }
+            let differences;
+            let markdownTable = `\n| ${currentSize.headers.join(' | ')} |\n| --- | --- | --- | --- | --- | --- |\n`;
+            if (process.env.PARENT_SIZE) {
+                try {
+                    const parentSize = parseSizeBerkley(process.env.PARENT_SIZE);
+                    differences = parentSize.values.map((parentValue, index) => {
+                        if (index >= 3) return " ";
 
-            if (process.env.PARENT_SIZE){
-              try {
-                  const oldContentFields = parseSizeBerkley(process.env.PARENT_SIZE);
-                  let differences = oldContentFields.values.map((oldValue, index) => {
-                      if (index >= 3) return " ";
-
-                      const parsedOld = parseInt(oldValue, 10);
-                      const parsedNew = parseInt(newContent.values[index], 10);
-                      if (isNaN(parsedOld) || isNaN(parsedNew)) {
-                          throw new Error("Invalid integer" + `: "${oldValue} ${newContent.values[index]}"`);
-                      }
-                      const diff = parsedNew - parsedOld
-                      return diff >= 0 ? `+${diff}` : `${diff}`;
-                  });
-
-                  markdownTable += `| ${oldContentFields.values.join(' | ')} |\n`;
-                  markdownTable += `| ${differences.join(' | ')} |\n`;
-
-              } catch (e) { console.log("Parent notes fetch/parsing failed. Most likely there is no Parent note to diff", e, typeof process.env.PARENT_SIZE, process.env.PARENT_SIZE) }
+                        const parsedParentValue = parseInt(parentValue, 10);
+                        const parsedCurrentValue = parseInt(currentSize.values[index], 10);
+                        if (isNaN(parsedParentValue) || isNaN(parsedCurrentValue)) {
+                            throw new Error("Invalid integer" + `: "${parentValue} ${currentSize.values[index]}"`);
+                        }
+                        const diff = parsedCurrentValue - parsedParentValue
+                        return diff >= 0 ? `+${diff}` : `${diff}`;
+                    });
+                    markdownTable += `| ${parentSize.values.join(' | ')} |\n`;
+                } catch (e) {
+                    // explicitly ignore errors here
+                    console.log("Parent notes fetch/parsing failed. Most likely there is no Parent note to diff", e, typeof process.env.PARENT_SIZE, process.env.PARENT_SIZE)
+                }
             }
 
+            markdownTable += `| ${currentSize.values.join(' | ')} |\n`;
+            if (differences) {
+                markdownTable += `| ${differences.join(' | ')} |\n`;
+            }
             core.setOutput('markdownTable', markdownTable);
         continue-on-error: true
 
