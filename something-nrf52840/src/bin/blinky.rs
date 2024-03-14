@@ -16,6 +16,11 @@ async fn main(_spawner: Spawner) {
     info!("led initilized2!");
     info!("led initilized3!");
     info!("led initilized4!");
+    info!("led initilized5!");
+    info!("led initilized6!");
+    info!("led initilized7!");
+    info!("led initilized8!");
+    info!("led initilized9!");
 
     loop {
         led.set_high();
