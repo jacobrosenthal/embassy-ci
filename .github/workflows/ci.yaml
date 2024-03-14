@@ -75,8 +75,9 @@ jobs:
             }
 
             let markdownTable;
+            let newContent;
             try {
-              const newContent = parseSizeBerkley(process.env.CURRENT_SIZE);
+              newContent = parseSizeBerkley(process.env.CURRENT_SIZE);
               markdownTable = `\n| ${newContent.headers.join(' | ')} |\n| --- | --- | --- | --- | --- | --- |\n| ${newContent.values.join(' | ')} |\n`;
 
             } catch (e) { console.log("Parent current size failed", e, typeof process.env.CURRENT_SIZE, process.env.CURRENT_SIZE) }
