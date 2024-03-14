@@ -1,4 +1,4 @@
-name: CI
+name: HIL
 
 on: [pull_request]
 
