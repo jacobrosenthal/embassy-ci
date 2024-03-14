@@ -14,12 +14,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: dtolnay/rust-toolchain@v1
-        id: rusttoolchain
+      - uses: actions/cache@v3
         with:
-          target: thumbv7em-none-eabi
-          toolchain: 1.75
-          components: rust-src, rustfmt, llvm-tools
+          path: |
+            ~/.rustup/
+          key: ${{ runner.os }}-rust-toolchain-${{ hashFiles('rust-toolchain.toml') }}
 
       - uses: actions/cache@v3
         with:
