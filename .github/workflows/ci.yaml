@@ -81,6 +81,8 @@ jobs:
 
             let differences;
             let markdownTable = `\n| ${currentSize.headers.join(' | ')} |\n| --- | --- | --- | --- | --- | --- |\n`;
+            console.log(process.env.PARENT_SIZE)
+
             if (process.env.PARENT_SIZE) {
                 try {
                     const parentSize = parseSizeBerkley(process.env.PARENT_SIZE);
