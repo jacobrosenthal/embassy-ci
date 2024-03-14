@@ -3,7 +3,7 @@ name: CI
 on: [pull_request]
 
 permissions:
-  pull-requests: write
+  pull-requests: write # Comment
   contents: write # Git notes
 
 jobs:
@@ -15,12 +15,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: dtolnay/rust-toolchain@v1
-        id: rusttoolchain
+      - uses: actions/cache@v3
         with:
-          target: thumbv7em-none-eabi
-          toolchain: 1.75
-          components: rust-src, rustfmt, llvm-tools
+          path: |
+            ~/.rustup/
+          key: ${{ runner.os }}-rust-toolchain-${{ hashFiles('rust-toolchain.toml') }}
 
       - uses: actions/cache@v3
         with:
@@ -30,13 +29,13 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             something-nrf52840/target/
-          key: ${{ runner.os }}-${{ steps.rusttoolchain.outputs.cachekey }}-cargo-something-nrf52840-${{ hashFiles('something-nrf52840/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-something-nrf52840-${{ hashFiles('something-nrf52840/Cargo.lock') }}
 
       - name: install curl
         run: sudo apt-get install curl
 
       - name: build
-        run: cargo build --manifest-path something-nrf52840/Cargo.toml --target thumbv7em-none-eabi
+        run: cargo build --release --manifest-path something-nrf52840/Cargo.toml --target thumbv7em-none-eabi
 
       - name: install cargo-binutils
         run: curl -L https://github.com/rust-embedded/cargo-binutils/releases/download/v0.3.6/x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /usr/local/bin --strip-components=1 x86_64-unknown-linux-gnu/
@@ -45,7 +44,7 @@ jobs:
         id: cargo_size
         run: |
           echo "size<<EOF" >> $GITHUB_OUTPUT
-          cargo size -q --target thumbv7em-none-eabi --release >> $GITHUB_OUTPUT
+          cargo size --release -q --target thumbv7em-none-eabi >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         working-directory: something-nrf52840
         continue-on-error: true
@@ -75,34 +74,38 @@ jobs:
                 return { headers, values };
             }
 
-            let markdownTable;
+            let currentSize;
             try {
-              const newContent = parseSizeBerkley(process.env.CURRENT_SIZE);
-              markdownTable = `\n| ${newContent.headers.join(' | ')} |\n| --- | --- | --- | --- | --- | --- |\n| ${newContent.values.join(' | ')} |\n`;
+                currentSize = parseSizeBerkley(process.env.CURRENT_SIZE);
+            } catch (e) { core.setFailed(`Parse current size failed: ${error.message}`, typeof process.env.CURRENT_SIZE, process.env.CURRENT_SIZE); }
 
-            } catch (e) { console.log("Parent current size failed", e, typeof process.env.CURRENT_SIZE, process.env.CURRENT_SIZE) }
+            let differences;
+            let markdownTable = `\n| ${currentSize.headers.join(' | ')} |\n| --- | --- | --- | --- | --- | --- |\n`;
+            if (process.env.PARENT_SIZE) {
+                try {
+                    const parentSize = parseSizeBerkley(process.env.PARENT_SIZE);
+                    differences = parentSize.values.map((parentValue, index) => {
+                        if (index >= 3) return " ";
 
-            if (process.env.PARENT_SIZE){
-              try {
-                  const oldContentFields = parseSizeBerkley(process.env.PARENT_SIZE);
-                  let differences = oldContentFields.values.map((oldValue, index) => {
-                      if (index >= 3) return " ";
-
-                      const parsedOld = parseInt(oldValue, 10);
-                      const parsedNew = parseInt(newContent.values[index], 10);
-                      if (isNaN(parsedOld) || isNaN(parsedNew)) {
-                          throw new Error("Invalid integer" + `: "${oldValue} ${newContent.values[index]}"`);
-                      }
-                      const diff = parsedNew - parsedOld
-                      return diff >= 0 ? `+${diff}` : `${diff}`;
-                  });
-
-                  markdownTable += `| ${oldContentFields.values.join(' | ')} |\n`;
-                  markdownTable += `| ${differences.join(' | ')} |\n`;
-
-              } catch (e) { console.log("Parent notes fetch/parsing failed. Most likely there is no Parent note to diff", e, typeof process.env.PARENT_SIZE, process.env.PARENT_SIZE) }
+                        const parsedParentValue = parseInt(parentValue, 10);
+                        const parsedCurrentValue = parseInt(currentSize.values[index], 10);
+                        if (isNaN(parsedParentValue) || isNaN(parsedCurrentValue)) {
+                            throw new Error("Invalid integer" + `: "${parentValue} ${currentSize.values[index]}"`);
+                        }
+                        const diff = parsedCurrentValue - parsedParentValue
+                        return diff >= 0 ? `+${diff}` : `${diff}`;
+                    });
+                    markdownTable += `| ${parentSize.values.join(' | ')} |\n`;
+                } catch (e) {
+                    // explicitly ignore errors here
+                    console.log("Parent notes fetch/parsing failed. Most likely there is no Parent note to diff", e, typeof process.env.PARENT_SIZE, process.env.PARENT_SIZE)
+                }
             }
 
+            markdownTable += `| ${currentSize.values.join(' | ')} |\n`;
+            if (differences) {
+                markdownTable += `| ${differences.join(' | ')} |\n`;
+            }
             core.setOutput('markdownTable', markdownTable);
         continue-on-error: true
 
