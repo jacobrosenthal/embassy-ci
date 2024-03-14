@@ -36,7 +36,7 @@ jobs:
         run: cargo batch --- build --release --manifest-path tests/nrf52840/Cargo.toml --target thumbv7em-none-eabi --out-dir out/tests
 
       - name: install teleprobe
-        run: curl -L -o /usr/local/bin/teleprobe https://github.com/jacobrosenthal/teleprobe/releases/download/v0.1.0-static/teleprobe-v0.1.0-static-linux-x64 && chmod +x /usr/local/bin/teleprobe
+        run: cargo install teleprobe
 
       - name: test HIL
         run: teleprobe client --token ${{ secrets.TELEPROBE_TOKEN }} --host ${{ secrets.TELEPROBE_HOST }} run -r out/tests

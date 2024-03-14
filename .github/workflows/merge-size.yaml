@@ -34,11 +34,8 @@ jobs:
       - name: build
         run: cargo build --manifest-path something-nrf52840/Cargo.toml --target thumbv7em-none-eabi
 
-      - name: install curl
-        run: sudo apt-get install curl
-
-      - name: install cargo-binutils
-        run: curl -L https://github.com/rust-embedded/cargo-binutils/releases/download/v0.3.6/x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /usr/local/bin --strip-components=1 x86_64-unknown-linux-gnu/
+      - name: install binutils
+        run: cargo install cargo-binutils
 
       - name: cargo size and set output
         id: cargo_size
