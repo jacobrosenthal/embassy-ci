@@ -79,7 +79,7 @@ jobs:
             let currentSize;
             try {
                 currentSize = parseSizeBerkley(process.env.CURRENT_SIZE);
-            } catch (e) { core.setFailed(`Parse current size failed: ${error.message}`, typeof process.env.CURRENT_SIZE, process.env.CURRENT_SIZE); }
+            } catch (e) { core.setFailed(`Parse current size failed: ${error.message}`); }
 
             let differences;
             let markdownTable = `\n| ${currentSize.headers.join(' | ')} |\n| --- | --- | --- | --- | --- | --- |\n`;
@@ -101,7 +101,7 @@ jobs:
                     markdownTable += `| ${parentSize.values.join(' | ')} |\n`;
                 } catch (e) {
                     // explicitly ignore errors here
-                    console.log("Parent notes fetch/parsing failed. Most likely there is no Parent note to diff", e, typeof process.env.PARENT_SIZE, process.env.PARENT_SIZE)
+                    console.log("Parent notes fetch/parsing failed. Most likely there is no Parent note to diff", e)
                 }
             }
 
