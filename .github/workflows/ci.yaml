@@ -38,7 +38,7 @@ jobs:
         run: cargo build --release --manifest-path something-nrf52840/Cargo.toml --target thumbv7em-none-eabi
 
       - name: install cargo-binutils
-        run: curl -L https://github.com/rust-embedded/cargo-binutils/releases/download/v0.3.6/x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /usr/local/bin --strip-components=1 x86_64-unknown-linux-gnu/
+        run: curl -L https://github.com/rust-embedded/cargo-binutils/releases/download/v0.3.6/x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /usr/local/bin --strip-components=1 x86_64-unknown-linux-gnu/ --force
 
       - name: cargo size and set output
         id: cargo_size
@@ -73,14 +73,17 @@ jobs:
                 const values = lines[1].split(/\s+/).filter(Boolean);
                 return { headers, values };
             }
+            console.log(process.env.PARENT_SIZE)
+            console.log(process.env.CURRENT_SIZE)
 
             let currentSize;
             try {
                 currentSize = parseSizeBerkley(process.env.CURRENT_SIZE);
-            } catch (e) { core.setFailed(`Parse current size failed: ${error.message}`, typeof process.env.CURRENT_SIZE, process.env.CURRENT_SIZE); }
+            } catch (e) { core.setFailed(`Parse current size failed: ${error.message}`); }
 
             let differences;
             let markdownTable = `\n| ${currentSize.headers.join(' | ')} |\n| --- | --- | --- | --- | --- | --- |\n`;
+
             if (process.env.PARENT_SIZE) {
                 try {
                     const parentSize = parseSizeBerkley(process.env.PARENT_SIZE);
@@ -98,7 +101,7 @@ jobs:
                     markdownTable += `| ${parentSize.values.join(' | ')} |\n`;
                 } catch (e) {
                     // explicitly ignore errors here
-                    console.log("Parent notes fetch/parsing failed. Most likely there is no Parent note to diff", e, typeof process.env.PARENT_SIZE, process.env.PARENT_SIZE)
+                    console.log("Parent notes fetch/parsing failed. Most likely there is no Parent note to diff", e)
                 }
             }
 

@@ -28,7 +28,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-${{ steps.rusttoolchain.outputs.cachekey }}-cargo-something-nrf52840-${{ hashFiles('something-nrf52840/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-something-nrf52840-${{ hashFiles('something-nrf52840/Cargo.lock') }}
 
       - name: build
         run: cargo build --manifest-path something-nrf52840/Cargo.toml --target thumbv7em-none-eabi
@@ -40,13 +40,14 @@ jobs:
         id: cargo_size
         run: |
           echo "size<<EOF" >> $GITHUB_OUTPUT
-          cargo size -q --target thumbv7em-none-eabi --release >> $GITHUB_OUTPUT
+          cargo size --release -q --target thumbv7em-none-eabi >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         working-directory: something-nrf52840
         continue-on-error: true
 
       - name: Add analysis results to Git notes
         run: |
+          echo ${{ steps.cargo_size.outputs.size }}
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git fetch origin refs/notes/*:refs/notes/*

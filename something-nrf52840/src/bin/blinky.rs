@@ -13,6 +13,9 @@ async fn main(_spawner: Spawner) {
     let mut led = Output::new(p.P0_13, Level::Low, OutputDrive::Standard);
 
     info!("led initilized!");
+    info!("led initilized2!");
+    info!("led initilized3!");
+    info!("led initilized4!");
 
     loop {
         led.set_high();
