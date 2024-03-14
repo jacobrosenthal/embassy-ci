@@ -15,12 +15,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: dtolnay/rust-toolchain@v1
-        id: rusttoolchain
+      - uses: actions/cache@v3
         with:
-          target: thumbv7em-none-eabi
-          toolchain: 1.75
-          components: rust-src, rustfmt, llvm-tools
+          path: |
+            ~/.rustup/
+          key: ${{ runner.os }}-rust-toolchain-${{ hashFiles('rust-toolchain.toml') }}
 
       - uses: actions/cache@v3
         with:
@@ -30,7 +29,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             something-nrf52840/target/
-          key: ${{ runner.os }}-${{ steps.rusttoolchain.outputs.cachekey }}-cargo-something-nrf52840-${{ hashFiles('something-nrf52840/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-something-nrf52840-${{ hashFiles('something-nrf52840/Cargo.lock') }}
 
       - name: install curl
         run: sudo apt-get install curl
