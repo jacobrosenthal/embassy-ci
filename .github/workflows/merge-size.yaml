@@ -28,7 +28,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-${{ steps.rusttoolchain.outputs.cachekey }}-cargo-something-nrf52840-${{ hashFiles('something-nrf52840/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-something-nrf52840-${{ hashFiles('something-nrf52840/Cargo.lock') }}
 
       - name: build
         run: cargo build --manifest-path something-nrf52840/Cargo.toml --target thumbv7em-none-eabi
